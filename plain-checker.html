@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" />
+<title>MC Checker (Plain Test)</title><meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>body{font-family:system-ui;margin:2rem} textarea{width:100%;height:150px}</style>
+</head><body>
+<h1>MC Checker (Plain Test)</h1>
+<p>Answers (one per line). Totals only.</p>
+<textarea id="answers" placeholder="1) A&#10;2) c&#10;3) d&#10;4) b&#10;5) b"></textarea><br>
+<button id="check">Check Score</button>
+<div id="stats" style="margin-top:1rem;display:none">
+  <div>Total: <span id="total"></span></div>
+  <div>Correct: <span id="correct"></span></div>
+  <div>Incorrect: <span id="incorrect"></span></div>
+  <div>Score: <span id="percent"></span>%</div>
+</div>
+<script>
+const key = ['a','c','d','b','b']; // DEMO KEY (plain)
+const pick = s => ((s||'').toLowerCase().match(/[a-z]/)||[''])[0];
+document.getElementById('check').addEventListener('click', ()=>{
+  const lines = document.getElementById('answers').value.split(/\r?\n/);
+  let correct=0;
+  for(let i=0;i<key.length;i++){
+    if (pick(lines[i]) === key[i]) correct++;
+  }
+  const total = key.length, incorrect = total - correct, percent = Math.round(100*correct/total);
+  document.getElementById('total').textContent = total;
+  document.getElementById('correct').textContent = correct;
+  document.getElementById('incorrect').textContent = incorrect;
+  document.getElementById('percent').textContent = percent;
+  document.getElementById('stats').style.display = 'block';
+});
+</script></body></html>
