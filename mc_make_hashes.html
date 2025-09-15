@@ -2,35 +2,33 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>MC Answer Hash Maker — v2 (Teacher Only)</title>
+<title>MC Answer Hash Maker — v4 (Teacher Only)</title>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <style>
-  :root{--ink:#111;--muted:#666}
-  body{font-family:system-ui,Segoe UI,Arial,sans-serif;max-width:900px;margin:40px auto;padding:0 16px;color:var(--ink)}
+  body{font-family:system-ui,Segoe UI,Arial,sans-serif;max-width:900px;margin:40px auto;padding:0 16px}
   h1{margin:0 0 8px}
   .row{margin:14px 0}
   textarea,input,button,select{font-size:16px}
   textarea{width:100%;height:160px}
   pre{background:#f6f8fa;padding:10px;border-radius:8px;white-space:pre-wrap}
-  .muted{color:var(--muted)}
+  .muted{color:#666}
   .inline{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
   .outbox{position:relative}
   .copybtn{position:absolute;top:8px;right:8px}
 </style>
 </head>
 <body>
-  <h1>Multiple-Choice Answer Hash Maker — v2</h1>
+  <h1>Multiple-Choice Answer Hash Maker — v4</h1>
   <p class="muted">Enter your MC answer key (one letter per line). Case doesn’t matter; only A–Z is used.</p>
 
   <div class="row">
     <label for="salt"><strong>Salt</strong> (keep this secret; a long random string):</label>
-    <input id="salt" placeholder="e.g., x3Q9wA7z-1fD-… (pick and save this!)" />
-    <div class="muted">Important: Use the same salt in your student checker (SALT constant).</div>
+    <input id="salt" placeholder="e.g., x3Q9wA7z-1fD-…" />
   </div>
 
   <div class="row">
-    <label for="answers"><strong>Answer key (one per line, e.g., A B C D …)</strong></label>
-    <textarea id="answers" placeholder="A&#10;C&#10;D&#10;B&#10;B"></textarea>
+    <label for="answers"><strong>Answer key</strong> (one per line)</label>
+    <textarea id="answers" placeholder="A&#10;C&#10;D&#10;B"></textarea>
   </div>
 
   <div class="row inline">
@@ -38,15 +36,20 @@
 
     <label class="inline">
       <input type="checkbox" id="wrapConst" />
-      Wrap as <code>const hashedKey = ...;</code>
+      Wrap as <code>const hashedKey = …;</code>
     </label>
 
     <label class="inline">
       Output style:
       <select id="style">
-        <option value="compact">Compact (single line)</option>
-        <option value="pretty">Pretty (line breaks)</option>
+        <option value="compact">Compact</option>
+        <option value="pretty">Pretty</option>
       </select>
+    </label>
+
+    <label class="inline">
+      <input type="checkbox" id="omitBrackets" />
+      Omit outer [ ] brackets
     </label>
   </div>
 
@@ -54,7 +57,6 @@
     <h3>Output</h3>
     <button class="copybtn" id="copyBtn">Copy</button>
     <pre id="out"></pre>
-    <div class="muted">Paste this directly into your student HTML file.</div>
   </div>
 
 <script>
@@ -64,76 +66,69 @@ const normLetter = s => {
 };
 
 async function sha256Hex(str){
-  if (window.crypto && crypto.subtle) {
+  if (crypto && crypto.subtle){
     const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
     return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("");
   }
-  // Fallback (tiny pure-JS SHA-256)
   return sha256HexFallback(str);
 }
 
-/* Minimal pure-JS SHA-256 fallback (public-domain style) */
+// Fallback SHA-256 (pure JS)
 function sha256HexFallback(ascii){function R(n,x){return(x>>>n)|(x<<(32-n))}
-var i,j,t,h=[],k=[],HASH=[],W=new Array(64),H=HASH,K=k;function u(s){return unescape(encodeURIComponent(s))}
+var i,j,h=[],k=[],HASH=[],W=[],H=HASH,K=k;function u(s){return unescape(encodeURIComponent(s))}
 var s=u(ascii),l=s.length;if(!K.length){var p={},n=2;while(K.length<64){if(!p[n]){for(i=n*n;i<312;i+=n)p[i]=1;h.push((n**.5*2**32)|0);K.push((n**(1/3)*2**32)|0)}n++}}
 s+="\x80";while(s.length%64-56)s+="\x00";for(i=0;i<s.length;i++){j=s.charCodeAt(i);W[i>>2]|=j<<((3-i)%4)*8}
 W[W.length]=l>>>29;W[W.length]=l<<3;H[0]=h[0];H[1]=h[1];H[2]=h[2];H[3]=h[3];H[4]=h[4];H[5]=h[5];H[6]=h[6];H[7]=h[7];
 for(i=0;i<W.length;){var w=W.slice(i,i+=16);for(j=16;j<64;j++){var a=w[j-15],b=w[j-2];
 w[j]=(w[j-16]+((R(7,a)^R(18,a)^(a>>>3)))+w[j-7]+((R(17,b)^R(19,b)^(b>>>10))))|0}
 var A=H[0],B=H[1],C=H[2],D=H[3],E=H[4],F=H[5],G=H[6],Z=H[7];
-for(j=0;j<64;j++){var S1=(R(6,E)^R(11,E)^R(25,E)),ch=(E&F)^(~E&G),temp1=(Z+S1+ch+K[j]+w[j])|0,
-S0=(R(2,A)^R(13,A)^R(22,A)),maj=(A&B)^(A&C)^(B&C),temp2=(S0+maj)|0;
-Z=G;G=F;F=E;E=(D+temp1)|0;D=C;C=B;B=A;A=(temp1+temp2)|0}
+for(j=0;j<64;j++){var S1=(R(6,E)^R(11,E)^R(25,E)),ch=(E&F)^(~E&G),t1=(Z+S1+ch+K[j]+w[j])|0,
+S0=(R(2,A)^R(13,A)^R(22,A)),maj=(A&B)^(A&C)^(B&C),t2=(S0+maj)|0;
+Z=G;G=F;F=E;E=(D+t1)|0;D=C;C=B;B=A;A=(t1+t2)|0}
 H[0]=(H[0]+A)|0;H[1]=(H[1]+B)|0;H[2]=(H[2]+C)|0;H[3]=(H[3]+D)|0;H[4]=(H[4]+E)|0;H[5]=(H[5]+F)|0;H[6]=(H[6]+G)|0;H[7]=(H[7]+Z)|0}
 return [H[0],H[1],H[2],H[3],H[4],H[5],H[6],H[7]].map(x=>('00000000'+(x>>>0).toString(16)).slice(-8)).join('')}
 
-/* Build output in the exact style you want */
-function formatOutput(hashes, { wrapConst, style }){
-  // hashes is an array of arrays: [ [hash1], [hash2], ... ]
-  if (style === 'pretty'){
-    const inner = hashes.map(arr => `  ["${arr[0]}"]`).join(',\n');
-    return wrapConst
-      ? `const hashedKey = [\n${inner}\n];`
-      : `[\n${inner}\n]`;
-  } else { // compact
-    const inner = hashes.map(arr => `["${arr[0]}"]`).join(',');
-    return wrapConst
-      ? `const hashedKey = [${inner}];`
-      : `[${inner}]`;
+function formatOutput(hashes,{wrapConst,style,omitBrackets}){
+  let out="";
+  if(style==="pretty"){
+    const inner=hashes.map(arr=>`  ["${arr[0]}"]`).join(",\n");
+    out=omitBrackets?`${inner}`:`[\n${inner}\n]`;
+  }else{
+    const inner=hashes.map(arr=>`["${arr[0]}"]`).join(",");
+    out=omitBrackets?`${inner}`:`[${inner}]`;
   }
+  if(wrapConst) out=`const hashedKey = ${out};`;
+  return out;
 }
 
-document.getElementById('makeBtn').addEventListener('click', async ()=>{
-  const salt = document.getElementById('salt').value.trim();
-  const raw  = document.getElementById('answers').value;
-  if(!salt){ alert('Please enter a salt.'); return; }
-  const letters = raw.split(/\r?\n/).map(normLetter).filter(Boolean);
-  if(!letters.length){ alert('Please enter at least one answer letter.'); return; }
-
-  const hashes = [];
-  for (const letter of letters){
-    const h = await sha256Hex(salt + "|" + letter);
-    hashes.push([h]); // one acceptable variant per MC item
+document.getElementById('makeBtn').addEventListener('click',async()=>{
+  const salt=document.getElementById('salt').value.trim();
+  const raw=document.getElementById('answers').value;
+  if(!salt){alert('Please enter a salt.');return;}
+  const letters=raw.split(/\r?\n/).map(normLetter).filter(Boolean);
+  if(!letters.length){alert('Please enter at least one letter.');return;}
+  const hashes=[];
+  for(const letter of letters){
+    const h=await sha256Hex(salt+"|"+letter);
+    hashes.push([h]);
   }
+  const wrapConst=document.getElementById('wrapConst').checked;
+  const style=document.getElementById('style').value;
+  const omitBrackets=document.getElementById('omitBrackets').checked;
 
-  const wrapConst = document.getElementById('wrapConst').checked;
-  const style = document.getElementById('style').value;
-  const out = formatOutput(hashes, { wrapConst, style });
-  document.getElementById('out').textContent = out;
+  const out="// " + letters.length + " answers hashed\n" +
+             formatOutput(hashes,{wrapConst,style,omitBrackets});
+  document.getElementById('out').textContent=out;
 });
 
-document.getElementById('copyBtn').addEventListener('click', async ()=>{
-  const text = document.getElementById('out').textContent;
-  if (!text.trim()){ alert('Nothing to copy yet. Click "Make Hashes" first.'); return; }
+document.getElementById('copyBtn').addEventListener('click',async()=>{
+  const text=document.getElementById('out').textContent;
+  if(!text.trim()){alert('Nothing to copy yet.');return;}
   try{
     await navigator.clipboard.writeText(text);
-    const btn = document.getElementById('copyBtn');
-    const old = btn.textContent;
-    btn.textContent = 'Copied!';
-    setTimeout(()=>btn.textContent=old, 1200);
-  }catch(e){
-    alert('Copy failed. Select and copy manually.');
-  }
+    const btn=document.getElementById('copyBtn');const old=btn.textContent;
+    btn.textContent='Copied!';setTimeout(()=>btn.textContent=old,1200);
+  }catch(e){alert('Copy failed. Select manually.');}
 });
 </script>
 </body>
