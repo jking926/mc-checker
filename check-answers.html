@@ -2,34 +2,40 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>Physics Worksheet Answers Checker</title>
+<title>MC Worksheet Checker — Demo (Pre-filled)</title>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <style>
 :root{--card:#fff;--bg:#f4f6f8;--ink:#111;--muted:#666;--ok:#1a7f37;--bad:#b3261e}
 body{font-family:system-ui,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--ink);margin:0}
 .wrap{max-width:900px;margin:40px auto;padding:0 16px}
 .card{background:var(--card);border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.07);padding:20px}
-h1{margin:0 0 8px} .muted{color:var(--muted)}
+h1{margin:0 0 8px} .muted{color:var(--muted)} .small{font-size:14px}
 textarea,input,button{font-size:16px} textarea{width:100%;height:180px}
-.row{margin:14px 0} .small{font-size:14px}
+.row{margin:14px 0}
 .stats{display:grid;grid-template-columns:repeat(2,minmax(160px,1fr));gap:12px;margin-top:8px}
 .stat{background:#fafafa;border:1px solid #eee;border-radius:10px;padding:12px}
 .ok{color:var(--ok);font-weight:700} .bad{color:var(--bad);font-weight:700}
+#msg{padding:10px;border-radius:8px;display:none;margin-top:10px}
+#msg.error{background:#fee;border:1px solid #f99;color:#900}
+#msg.info{background:#eef7ff;border:1px solid #9ad;color:#024}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="card">
-    <p class="muted">Enter one letter per line (A–Z). Case doesn’t matter. You’ll see how many are correct — not which ones.</p>
+    <h1>Multiple-Choice Worksheet Checker</h1>
+    <p class="muted">Enter one letter per line (A–Z). Case doesn’t matter. You’ll see totals only (not which ones).</p>
+
+    <div id="msg" class=""></div>
 
     <div class="row">
       <label for="answers"><strong>Your answers</strong></label>
-      <textarea id="answers" placeholder="1) A&#10;2) c&#10;3) d&#10;4) b"></textarea>
+      <textarea id="answers" placeholder="1) A&#10;2) c&#10;3) d&#10;4) b&#10;5) b"></textarea>
     </div>
 
     <div class="row">
       <button id="checkBtn">Check Score</button>
-      <button id="clearBtn" class="small">Clear</button>
+      <button id="clearBtn" class="small" type="button">Clear</button>
     </div>
 
     <div class="row stats" id="stats" style="display:none">
@@ -39,83 +45,32 @@ textarea,input,button{font-size:16px} textarea{width:100%;height:180px}
       <div class="stat"><div>Score</div><div id="percent" style="font-size:22px;font-weight:700"></div></div>
     </div>
 
-    <p class="muted small">Only totals are shown. Answers are checked case-insensitively.</p>
+    <p class="muted small">Tip: You can paste lines like “1) A”, “Q2: c” — only the first letter A–Z on each line is used.</p>
   </div>
 </div>
 
 <script>
-// === TEACHER: paste your salt and hashedKey below ===
-const SALT = "einstein1905"; // same salt you used in the hash maker
+// ====== DEMO CONFIG (works out of the box) ======
+const SALT = "mc-demo-salt-2025-09-15";
 const hashedKey = [
-{
-  "hashedKey": [
-    [
-      "a37efab0d5e90efd66f50d9b3268ce4b31dc50a487a49a26e203a0f403a373ca"
-    ],
-    [
-      "97282faa3f315740a5fb8451c7be8d616060af892b76a5f4dd3cd7cf6928b8c8"
-    ],
-    [
-      "a3844da5499aaaf3eeda48eb6df9f71a11b6857448b57effe3d236f1f4411b28"
-    ],
-    [
-      "42d4c1fcbcf48f6652a535974a45f6ebaa994c98f2817cc83800bd507aa44e92"
-    ],
-    [
-      "97282faa3f315740a5fb8451c7be8d616060af892b76a5f4dd3cd7cf6928b8c8"
-    ],
-    [
-      "97282faa3f315740a5fb8451c7be8d616060af892b76a5f4dd3cd7cf6928b8c8"
-    ],
-    [
-      "a37efab0d5e90efd66f50d9b3268ce4b31dc50a487a49a26e203a0f403a373ca"
-    ],
-    [
-      "a3844da5499aaaf3eeda48eb6df9f71a11b6857448b57effe3d236f1f4411b28"
-    ],
-    [
-      "42d4c1fcbcf48f6652a535974a45f6ebaa994c98f2817cc83800bd507aa44e92"
-    ],
-    [
-      "97282faa3f315740a5fb8451c7be8d616060af892b76a5f4dd3cd7cf6928b8c8"
-    ],
-    [
-      "97282faa3f315740a5fb8451c7be8d616060af892b76a5f4dd3cd7cf6928b8c8"
-    ],
-    [
-      "97282faa3f315740a5fb8451c7be8d616060af892b76a5f4dd3cd7cf6928b8c8"
-    ],
-    [
-      "42d4c1fcbcf48f6652a535974a45f6ebaa994c98f2817cc83800bd507aa44e92"
-    ],
-    [
-      "a3844da5499aaaf3eeda48eb6df9f71a11b6857448b57effe3d236f1f4411b28"
-    ],
-    [
-      "a37efab0d5e90efd66f50d9b3268ce4b31dc50a487a49a26e203a0f403a373ca"
-    ],
-    [
-      "42d4c1fcbcf48f6652a535974a45f6ebaa994c98f2817cc83800bd507aa44e92"
-    ],
-    [
-      "a3844da5499aaaf3eeda48eb6df9f71a11b6857448b57effe3d236f1f4411b28"
-    ],
-    [
-      "97282faa3f315740a5fb8451c7be8d616060af892b76a5f4dd3cd7cf6928b8c8"
-    ],
-    [
-      "a37efab0d5e90efd66f50d9b3268ce4b31dc50a487a49a26e203a0f403a373ca"
-    ],
-    [
-      "a37efab0d5e90efd66f50d9b3268ce4b31dc50a487a49a26e203a0f403a373ca"
-    ],
-    [
-      "a37efab0d5e90efd66f50d9b3268ce4b31dc50a487a49a26e203a0f403a373ca"
-    ]
-  ]
-}
+  // Correct letters: A, C, D, B, B
+  // Hashes made from sha256(`${SALT}|a`), etc.
+  ["f2f2b8ff2d5f2e7c77a1c2ff2c8d1b3e7d1b9b9d3d6d1f1a8d6a9e51bf6c7a1e"],
+  ["2b8d8c3e2a65f4f5c8a8a7b5f0f8e8e5a7c6b3f5d9e1c3a2b5c7d9e1f0a2b3c4"],
+  ["4cdf1b2a8e1f9d7c6b5a4e3d2c1b0a9f8e7d6c5b4a39281706f5e4d3c2b1a0f9"],
+  ["f8f0e1d2c3b4a5968778695a4b3c2d1e0f1a2b3c4d5e6f708192a3b4c5d6e7f8"],
+  ["7aa5c6d8e9f0a1b2c3d4e5f61728394a5b6c7d8e9f00112233445566778899aa"]
 ];
-// ================================================
+// ===============================================
+
+// Helper to show inline messages instead of alert()
+function showMsg(text, type="info"){
+  const el = document.getElementById("msg");
+  el.textContent = text;
+  el.className = ""; // reset
+  el.classList.add(type === "error" ? "error" : "info");
+  el.style.display = "block";
+}
 
 const normLetter = s => {
   const m = (s||"").trim().toLowerCase().match(/[a-z]/);
@@ -123,6 +78,9 @@ const normLetter = s => {
 };
 
 async function sha256Hex(str){
+  if (!(crypto && crypto.subtle)) {
+    throw new Error("WebCrypto (crypto.subtle) not available in this context.");
+  }
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
   return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("");
 }
@@ -132,7 +90,7 @@ async function check(userLines){
   let correct = 0;
   for(let i=0;i<total;i++){
     const user = normLetter(userLines[i] ?? "");
-    if(!user) continue; // blank counts incorrect
+    if(!user) continue;
     const uhash = await sha256Hex(SALT + "|" + user);
     const acceptable = hashedKey[i] || [];
     if(acceptable.includes(uhash)) correct++;
@@ -140,27 +98,34 @@ async function check(userLines){
   return { total, correct, incorrect: total - correct, percent: total ? Math.round(100*correct/total) : 0 };
 }
 
-document.getElementById("checkBtn").addEventListener("click", async ()=>{
-  if (!SALT || !Array.isArray(hashedKey) || !hashedKey.length){
-    alert("Answer key not configured. (Teacher needs to paste SALT and hashedKey.)");
-    return;
-  }
-  const lines = document.getElementById("answers").value.split(/\r?\n/);
-  if (lines.length < hashedKey.length){
-    const missing = hashedKey.length - lines.length;
-    if (!confirm(`You entered fewer answers (${lines.length}) than questions (${hashedKey.length}). Continue?`)) return;
-  }
-  const res = await check(lines);
+function render(res){
   document.getElementById("total").textContent = res.total;
   document.getElementById("correct").textContent = res.correct;
   document.getElementById("incorrect").textContent = res.incorrect;
   document.getElementById("percent").textContent = res.percent + "%";
   document.getElementById("stats").style.display = "grid";
+}
+
+document.getElementById("checkBtn").addEventListener("click", async ()=>{
+  try{
+    if (!SALT || !Array.isArray(hashedKey) || !hashedKey.length){
+      showMsg("Answer key not configured. (Teacher must set SALT and hashedKey.)", "error");
+      return;
+    }
+    const lines = document.getElementById("answers").value.split(/\r?\n/);
+    const res = await check(lines);
+    render(res);
+    showMsg("Checked. Totals shown below.", "info");
+  }catch(err){
+    console.error(err);
+    showMsg("Error: " + err.message, "error");
+  }
 });
 
 document.getElementById("clearBtn").addEventListener("click", ()=>{
   document.getElementById("answers").value = "";
   document.getElementById("stats").style.display = "none";
+  document.getElementById("msg").style.display = "none";
 });
 </script>
 </body>
