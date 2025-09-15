@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>MC Answer Hash Maker (Teacher Only)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  body{font-family:system-ui,Segoe UI,Arial,sans-serif;max-width:800px;margin:40px auto;padding:0 16px}
+  textarea,input,button{font-size:16px;width:100%} textarea{height:160px}
+  pre{background:#f6f8fa;padding:8px;border-radius:6px;white-space:pre-wrap}
+  .row{margin:14px 0} .muted{color:#666}
+</style>
+</head>
+<body>
+<h1>Multiple-Choice Answer Hash Maker</h1>
+<p>Enter your answer key (one letter per line). Letters are case-insensitive; only A–Z are kept. You’ll get salted SHA-256 hashes to paste into the student page.</p>
+
+<div class="row">
+  <label for="salt"><strong>Salt</strong> (keep this secret; a long random string):</label>
+  <input id="salt" placeholder="Example: x3Q9wA7z-1fD..."/>
+  <p class="muted">Store this privately. Changing it invalidates old hashes.</p>
+</div>
+
+<div class="row">
+  <label for="answers"><strong>Answer key (one per line, e.g., A B C D …)</strong></label>
+  <textarea id="answers" placeholder="A&#10;B&#10;D&#10;C"></textarea>
+</div>
+
+<div class="row"><button id="hashBtn">Make Hashes</button></div>
+
+<div class="row">
+  <h3>JSON to paste into the student page</h3>
+  <pre id="out"></pre>
+</div>
+
+<script>
+const normLetter = s => {
+  const m = (s||"").trim().toLowerCase().match(/[a-z]/);
+  return m ? m[0] : "";
+};
+async function sha256Hex(str){
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+document.getElementById("hashBtn").addEventListener("click", async ()=>{
+  const salt = document.getElementById("salt").value.trim();
+  const raw  = document.getElementById("answers").value;
+  if(!salt){ alert("Please enter a salt."); return; }
+  const lines = raw.split(/\r?\n/).map(normLetter).filter(Boolean);
+  if(!lines.length){ alert("Please enter at least one answer letter."); return; }
+  const hashes = [];
+  for(const letter of lines){
+    hashes.push([ await sha256Hex(salt + "|" + letter) ]); // one acceptable variant per MC item
+  }
+  const payload = { hashedKey: hashes };
+  document.getElementById("out").textContent = JSON.stringify(payload, null, 2);
+});
+</script>
+</body>
+</html>
