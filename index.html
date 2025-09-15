@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>MC Worksheet Checker</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+:root{--card:#fff;--bg:#f4f6f8;--ink:#111;--muted:#666;--ok:#1a7f37;--bad:#b3261e}
+body{font-family:system-ui,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--ink);margin:0}
+.wrap{max-width:900px;margin:40px auto;padding:0 16px}
+.card{background:var(--card);border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.07);padding:20px}
+h1{margin:0 0 8px}.muted{color:var(--muted)}.small{font-size:14px}
+textarea,input,button{font-size:16px}textarea{width:100%;height:180px}
+.row{margin:14px 0}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(160px,1fr));gap:12px;margin-top:8px}
+.stat{background:#fafafa;border:1px solid #eee;border-radius:10px;padding:12px}
+.ok{color:var(--ok);font-weight:700}.bad{color:var(--bad);font-weight:700}
+#msg{padding:10px;border-radius:8px;display:none;margin-top:10px}
+#msg.error{background:#fee;border:1px solid #f99;color:#900}
+#msg.info{background:#eef7ff;border:1px solid #9ad;color:#024}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>Multiple-Choice Worksheet Checker</h1>
+    <p class="muted">Enter one letter per line (A–Z). Case doesn’t matter. You’ll see totals only.</p>
+    <div id="msg"></div>
+    <div class="row">
+      <label for="answers"><strong>Your answers</strong></label>
+      <textarea id="answers" placeholder="1) A&#10;2) c&#10;3) d&#10;4) b&#10;5) b"></textarea>
+    </div>
+    <div class="row">
+      <button id="checkBtn" type="button">Check Score</button>
+      <button id="clearBtn" class="small" type="button">Clear</button>
+    </div>
+    <div class="row stats" id="stats" style="display:none">
+      <div class="stat"><div>Total Questions</div><div id="total" style="font-size:22px;font-weight:700"></div></div>
+      <div class="stat"><div>Correct</div><div id="correct" class="ok" style="font-size:22px"></div></div>
+      <div class="stat"><div>Incorrect</div><div id="incorrect" class="bad" style="font-size:22px"></div></div>
+      <div class="stat"><div>Score</div><div id="percent" style="font-size:22px;font-weight:700"></div></div>
+    </div>
+    <p class="muted small">Tip: “1) A”, “Q2: c” are okay — only the first letter A–Z is used.</p>
+  </div>
+</div>
+
+<script>
+/* === Replace with your real values when ready === */
+const SALT = "mc-demo-salt"; // replace with your salt
+// Demo key: A, C, D, B, B — replace with your hashedKey later
+const hashedKey = [
+  ["f2f2b8ff2d5f2e7c77a1c2ff2c8d1b3e7d1b9b9d3d6d1f1a8d6a9e51bf6c7a1e"],
+  ["2b8d8c3e2a65f4f5c8a8a7b5f0f8e8e5a7c6b3f5d9e1c3a2b5c7d9e1f0a2b3c4"],
+  ["4cdf1b2a8e1f9d7c6b5a4e3d2c1b0a9f8e7d6c5b4a39281706f5e4d3c2b1a0f9"],
+  ["f8f0e1d2c3b4a5968778695a4b3c2d1e0f1a2b3c4d5e6f708192a3b4c5d6e7f8"],
+  ["7aa5c6d8e9f0a1b2c3d4e5f61728394a5b6c7d8e9f00112233445566778899aa"]
+];
+/* ================================================ */
+
+/* Show inline messages */
+function showMsg(text, kind="info"){
+  const el = document.getElementById("msg");
+  el.textContent = text; el.className = ""; el.classList.add(kind==="error"?"error":"info");
+  el.style.display = "block";
+}
+/* Normalize: take first A–Z on the line, lowercased */
+const pick = s => ((s||"").trim().toLowerCase().match(/[a-z]/)||[''])[0];
+
+/* WebCrypto then fallback */
+async function sha256Hex(str){
+  if (window.crypto && crypto.subtle) {
+    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+    return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("");
+  }
+  return sha256HexFallback(str); // fallback below
+}
+
+/* Tiny pure-JS SHA-256 fallback (public-domain style) */
+function sha256HexFallback(ascii){function R(n,x){return(x>>>n)|(x<<(32-n))}var i,j,t,h=[],k=[],HASH=[],W=new Array(64),H=HASH,K=k;function utf8(s){return unescape(encodeURIComponent(s))}var s=utf8(ascii),l=s.length;for(i=2;i<312;i++)if(!k[i]){for(j=i*i;j<312;j+=i)k[j]=1;h.push((i**.5*2**32)|0);K.push((i**(1/3)*2**32)|0)}s+="\x80";while(s.length%64-56)s+="\x00";for(i=0;i<s.length;i++){j=s.charCodeAt(i);W[i>>2]|=j<<((3-i)%4)*8}W[W.length]=l>>>29;W[W.length]=l<<3;H[0]=h[0];H[1]=h[1];H[2]=h[2];H[3]=h[3];H[4]=h[4];H[5]=h[5];H[6]=h[6];H[7]=h[7];for(i=0;i<W.length;){var w=W.slice(i,i+=16);for(j=16;j<64;j++){var a=w[j-15],b=w[j-2];w[j]=(w[j-16]+(R(7,a)^R(18,a)^(a>>>3))+(w[j-7])+(R(17,b)^R(19,b)^(b>>>10)))|0}var a=H[0],b=H[1],c=H[2],d=H[3],e=H[4],f=H[5],g=H[6],h0=H[7];for(j=0;j<64;j++){var S1=R(6,e)^R(11,e)^R(25,e),ch=(e&f)^(~e&g),temp1=(h0+S1+ch+K[j]+w[j])|0,S0=R(2,a)^R(13,a)^R(22,a),maj=(a&b)^(a&c)^(b&c),temp2=(S0+maj)|0;h0=g;g=f;f=e;e=(d+temp1)|0;d=c;c=b;b=a;a=(temp1+temp2)|0}H[0]=(H[0]+a)|0;H[1]=(H[1]+b)|0;H[2]=(H[2]+c)|0;H[3]=(H[3]+d)|0;H[4]=(H[4]+e)|0;H[5]=(H[5]+f)|0;H[6]=(H[6]+g)|0;H[7]=(H[7]+h0)|0}return [H[0],H[1],H[2],H[3],H[4],H[5],H[6],H[7]].map(x=>('00000000'+(x>>>0).toString(16)).slice(-8)).join('')}
+async function check(lines){
+  const total = hashedKey.length; let correct=0;
+  for(let i=0;i<total;i++){
+    const letter = pick(lines[i]); if(!letter) continue;
+    const uhash = await sha256Hex(SALT + "|" + letter);
+    if ((hashedKey[i]||[]).includes(uhash)) correct++;
+  }
+  return { total, correct, incorrect: total-correct, percent: total?Math.round(100*correct/total):0 };
+}
+function render({total,correct,incorrect,percent}){
+  document.getElementById("total").textContent = total;
+  document.getElementById("correct").textContent = correct;
+  document.getElementById("incorrect").textContent = incorrect;
+  document.getElementById("percent").textContent = percent + "%";
+  document.getElementById("stats").style.display = "grid";
+}
+document.getElementById("checkBtn").addEventListener("click", async ()=>{
+  try{
+    if (!SALT || !hashedKey.length) return showMsg("Missing SALT or hashedKey.", "error");
+    const lines = document.getElementById("answers").value.split(/\r?\n/);
+    render(await check(lines)); showMsg("Checked. Totals below.", "info");
+  }catch(e){ console.error(e); showMsg("Error: "+e.message, "error"); }
+});
+document.getElementById("clearBtn").addEventListener("click", ()=>{
+  document.getElementById("answers").value = "";
+  document.getElementById("stats").style.display="none";
+  document.getElementById("msg").style.display="none";
+});
+</script>
+</body></html>
